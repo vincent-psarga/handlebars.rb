@@ -11,7 +11,8 @@ module Handlebars
       src = File.open(Handlebars::Source.bundled_path, 'r').read
       @js = ExecJS.compile(src)
 
-      @partials = handlebars['partials'] = Handlebars::Partials.new
+      @partials = Handlebars::Partials.new
+      handlebars_set('partials', @partials)
     end
 
     def js
@@ -43,11 +44,11 @@ module Handlebars
     end
 
     def []=(key, value)
-      data[key] = value
+      handlebars_set(key, value)
     end
 
     def [](key)
-      data[key]
+      handlebars_get(key)
     end
 
     class << self
@@ -55,6 +56,14 @@ module Handlebars
     end
 
     private
+
+    def handlebars_set(key, value)
+      @js.call('(function (key, value) { Handlebars[key] = value; })', key, value);
+    end
+
+    def handlebars_get(key)
+      @js.call('(function (key) {return Handlebars[key]; })', key);
+    end
 
     def data
       handlebars[:_rubydata] ||= @js.call('Handlebars.create')

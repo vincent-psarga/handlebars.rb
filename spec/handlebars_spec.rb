@@ -74,9 +74,9 @@ describe(Handlebars::Context) do
 
   describe "creating safe strings from ruby" do
     let(:t) {subject.compile("{{safe}}")}
-    # it "respects safe strings returned from ruby blocks" do
-    #   t.call(:safe => lambda {|this, *args| Handlebars::SafeString.new("<pre>totally safe</pre>")}).should eql "<pre>totally safe</pre>"
-    # end
+    it "respects safe strings returned from ruby blocks" do
+      t.call(:safe => lambda {|this, *args| binding.pry; Handlebars::SafeString.new("<pre>totally safe</pre>")}).should eql "<pre>totally safe</pre>"
+    end
   end
 
   describe "context specific data" do
