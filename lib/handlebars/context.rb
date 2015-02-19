@@ -1,29 +1,37 @@
 require 'handlebars/source'
+require 'execjs'
+require 'pry'
+
 require 'v8'
+
 
 module Handlebars
   class Context
     def initialize
-      @js = V8::Context.new
-      @js.load(Handlebars::Source.bundled_path)
+      src = File.open(Handlebars::Source.bundled_path, 'r').read
+      @js = ExecJS.compile(src)
 
-      @partials = handlebars.partials = Handlebars::Partials.new
+      @partials = handlebars['partials'] = Handlebars::Partials.new
+    end
+
+    def js
+      @js
     end
 
     def compile(*args)
-      ::Handlebars::Template.new(self, handlebars.compile(*args))
+      ::Handlebars::Template.new(self, *args)
     end
 
     def precompile(*args)
-      handlebars.precompile(*args)
+      @js.call('Handlebars.precompile', *args)
     end
 
     def register_helper(name, &fn)
-      handlebars.registerHelper(name, fn)
+      @js.call('Handlebars.registerHelper', name, fn)
     end
 
     def register_partial(name, content)
-      handlebars.registerPartial(name, content)
+      @js.call('Handlebars.registerpartial', name, content)
     end
 
     def partial_missing(&fn)
@@ -49,7 +57,7 @@ module Handlebars
     private
 
     def data
-      handlebars[:_rubydata] ||= handlebars.create()
+      handlebars[:_rubydata] ||= @js.call('Handlebars.create')
     end
   end
 end
